@@ -77,7 +77,7 @@ tmax
 #----------------------------------------------------------------------------
 
 net1="TIMESERIES "+net[-1]+"_"
-sta1=sta+"pwr"+"__"
+sta1=sta+"Power"+"__"
 cha1=cha+"_M,"
 samp1=" "+str(len(powe))+" samples, "
 sampr1="0.0002777777777777 sps, "
