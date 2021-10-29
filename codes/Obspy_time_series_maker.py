@@ -4,7 +4,7 @@ from obspy import UTCDateTime
 from obspy import read
 import matplotlib.pyplot as plt
 import dill
-from datetime import datetime
+from datetime import datetime as datetime
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,6 +12,7 @@ import pandas as pd
 from matplotlib import gridspec
 import dill
 import os
+import re
 #----------------------------------------------------------------------------------------
 os.chdir("/home/sjohn/AON_PROJECT/O14K")
 dill.load_session("notebook_env.db")
@@ -71,7 +72,6 @@ endcolp=(np.where(finalp==xmax))
 prsr=finalp[(int(startcolp[0])):(int(endcolp[0]))]
 len(prsr)
 
-
 tmin
 tmax
 #----------------------------------------------------------------------------
@@ -105,20 +105,54 @@ with open (net[-1]+"_"+sta+"_"+cha+"_"+str(UTCDateTime(tminw))[:-1]+"wind.txt",'
         ti=str(UTCDateTime(mdates.num2date(wspd[i,0])))[:-1]
         f.write(ti+" "+str(wspd[i,1])+"\n")
 st+=read(os.path.join("/home/sjohn/AON_PROJECT/O14K/",namew))
+
+
 #----------------------------------------------------------------------------------------
 sta1=sta+"prsr"+"__"
-finalp
-header=net1+sta1+cha1+samp1+sampr1+startt1
+samp1=" "+str(len(powe))+" samples, "
+sampr="0.0002777777777777 sps, "
+cha1="LDV_M,"
+startt1=str(UTCDateTime(tmin))[:-1]+",  SLIST, FLOAT, COUNTS\n"
+header=net1+sta1+cha1+samp1+sampr+startt1
+print(header)
 tminp=mdates.num2date(prsr[0,0])
 tmaxp=mdates.num2date(prsr[-1,0])
-samp1=" "+str(len(prsr))+" samples, "
 namep=net[-1]+"_"+sta+"_"+cha+"_"+str(UTCDateTime(tminp))[:-1]+"pressure.txt"
 with open (net[-1]+"_"+sta+"_"+cha+"_"+str(UTCDateTime(tminp))[:-1]+"pressure.txt",'w') as f:
     f.write(header)
     for i in range(len(prsr)):
         ti=str(UTCDateTime(mdates.num2date(prsr[i,0])))[:-1]
         f.write(ti+" "+str(prsr[i,1])+"\n")
-st+=read(os.path.join("/home/sjohn/AON_PROJECT/O14K/",namep))
+
+plines=[]
+with open (os.path.join("/home/sjohn/AON_PROJECT/O14K/",namep),'r') as infile:
+    for line in infile:
+        plines.append(line)
+
+#------------------------------------------------------------------------------------------
+startt=UTCDateTime(mdates.num2date(xmin))
+endt=UTCDateTime(mdates.num2date(xmax))
+pressr=np.zeros(len(st[0]))
+for i in range(len(st[0])):
+    pattern=re.compile("(%s) ([\d\.]+)"%str(startt)[:-1])
+    for ele in plines:   
+        matches=re.finditer(pattern, ele)
+        for match in matches:
+            pressr[i]=match.group(2)
+ 
+    startt+=3600
+
+with open (net[-1]+"_"+sta+"_"+cha+"_"+str(UTCDateTime(tminp))[:-1]+"pressuref.txt",'w') as f:
+    f.write(header)
+    for i in range(len(pressr)):
+        f.write(str(pressr[i])+"\n")
+ 
+os.remove(os.path.join("/home/sjohn/AON_PROJECT/O14K/",namep)) 
+k=net[-1]+"_"+sta+"_"+cha+"_"+str(UTCDateTime(tminp))[:-1]+"pressuref.txt"
+k
+st+=read("/home/sjohn/AON_PROJECT/O14K/"+k)
 #----------------------------------------------------------------------------------------
-st[0].plot()
+st
 st.write("O14K_"+str(UTCDateTime(tmin))+str(UTCDateTime(tmax))+".MSEED", format="MSEED")  
+
+
