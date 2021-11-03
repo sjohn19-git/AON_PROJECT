@@ -11,12 +11,15 @@ import datetime
 from nan_help import nan_helper
 
 
-
+xmin=18375
+xmax=18634
 
 shift=1
 window=170
-st0=read("/home/sjohn/AON_PROJECT/O14K/O14K_2020-05-18T00:00:00.000000Z2020-12-04T00:00:00.000000Z.MSEED")
-time=18400+(window/48)
+file_name=input("File_name?")
+freq=input("freq")
+st0=read("/home/sjohn/AON_PROJECT/O14K/"+file_name)
+time=xmin+(window/48)
 tr1=st0[0]
 tr2=st0[2]
 st0[0].plot()
@@ -37,7 +40,7 @@ tr2.data=arr2
 st0[2].plot()
 st0[0].plot()
 st=st0.copy()
-
+st3=st0.copy()
 
 
 
@@ -97,8 +100,6 @@ for i in range(len(tr1)):
         lag=np.append(lag,np.where(coeif==np.amin(coeif))[0][0]-int((window/2)+1))
         st=st0.copy() 
         dt+=3600
-        if k>4772:
-            break
     except:
         break
         print("error")
@@ -114,11 +115,16 @@ np.where(coeif==np.amin(coeif))[0][0]
 for i in range(len(index)):
     index[i]=index[i].matplotlib_date
 
+#--------------------------------------------------------------------------------------
+
+xlmi=18383
+xlma=18628
 
 plt.figure(3)
 plt.scatter(index,corre,s=0.2)
 fig=plt.gcf()
-fig.set_size_inches(18.5, 10.5)
+fig.set_figwidth(18)
+fig.set_figheight(4)
 ax = plt.gca()
 ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=(SU)))
 date_format=mdates.DateFormatter('%d,%b,%y')
@@ -127,20 +133,21 @@ for label in ax.get_xticklabels():
     label.set_rotation(20)
     label.set_horizontalalignment('right')
 
+
 plt.xlabel("Time")
-ax.set_xlim([18410,18590])
+ax.set_xlim([xlmi,xlma])
 plt.ylabel("cross correlation coeifficient")
-plt.title("cross correlation in window length "+str(round((window/24),2))+" "+str(UTCDateTime(mdates.num2date(18410)))+" - "+str(UTCDateTime(mdates.num2date(18590))))
+plt.title("cross correlation in window length "+str(round((window/24),2))+"days "+str(UTCDateTime(mdates.num2date(xlmi)))+" - "+str(UTCDateTime(mdates.num2date(xlma)))+" of "+freq+"Hz")
 
 plt.figure(4)
 
 plt.scatter(index,lag,s=0.2)
 fig=plt.gcf()
-fig.set_size_inches(18.5, 10.5)
+fig.set_figwidth(18)
+fig.set_figheight(4)
 ax = plt.gca()
-ax.set_xlim([18410,18590])
-ax.set_ylim([-10,10])
-plt.title("cross correlation lag time in hours  "+str(UTCDateTime(mdates.num2date(18410)))+" - "+str(UTCDateTime(mdates.num2date(18590))))
+ax.set_xlim([xlmi,xlma])
+plt.title("cross correlation lag time in hours  "+str(UTCDateTime(mdates.num2date(xlmi)))+" - "+str(UTCDateTime(mdates.num2date(xlma)))+" of "+freq+"Hz")
 ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=(SU)))
 date_format=mdates.DateFormatter('%d,%b,%y')
 plt.ylabel("Lag in hours")
@@ -148,30 +155,3 @@ ax.xaxis.set_major_formatter(date_format)
 for label in ax.get_xticklabels():
     label.set_rotation(20)
     label.set_horizontalalignment('right')
-# fig = plt.figure()
-# fig.set_size_inches(10,6)
-# ax = fig.add_axes([0,0,1,1])
-# ax.bar([])
-# plt.show()
-
-# import pylab as p
-# p.plot(tr2.data)
-# p.plot(medfilt(tr2.data,7))
-# p.scatter(tr1.data)
-# p.scatter(medfilt(tr1.data,4))
-# p.show ()
-
-# st.normalize()
-#tr1.filter("bandpass",freqmin=0.0000005,freqmax=2)
-#tr2.filter("bandpass",freqmin=0.0000005,freqmax=2)
-# dn= tr2.stats.endtime
-#tr2.plot()
-#tr2.plot(starttime=dt , endtime=dt+6000000)
-#tr1.plot()
-
-# tr1d=medfilt(tr1d,25)
-# tr2d=medfilt(tr2d,25)
-
-# tr2s=tr2.slice(starttime,starttime+168*3600)
-# tr2s.plot()
-# len(tr2d)

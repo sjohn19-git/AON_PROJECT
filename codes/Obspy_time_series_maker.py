@@ -52,8 +52,8 @@ mintp=min(fint_frames)
 maxtp=max(fint_frames)
 #-----------------------------------------------------------------------------------------
 j=53
-xmin=18400
-xmax=18600
+xmin=18375
+xmax=18634
 
 
 tmin=mdates.num2date(xmin)
@@ -64,14 +64,13 @@ endcol=int(startcol+(UTCDateTime(tmax)-UTCDateTime(tmin))/(60*60))
 print(startcol,endcol)
 powe=final[j,startcol:endcol]
 fint_frames=fint_frames[startcol:endcol]
-startcolw=(np.where(finalw==xmin))
-endcolw=(np.where(finalw==xmax))
-wspd=finalw[(int(startcolw[0])):(int(endcolw[0]))]
-startcolp=(np.where(finalp==xmin))
-endcolp=(np.where(finalp==xmax))
-prsr=finalp[(int(startcolp[0])):(int(endcolp[0]))]
+startcolw=(np.where(np.logical_and(finalw>= xmin, finalw<= xmin+0.5)))
+endcolw=(np.where(np.logical_and(finalw>= xmax, finalw<= xmax+0.5)))
+wspd=finalw[(int(startcolw[0][0])):(int(endcolw[0][0]))]
+startcolp=(np.where(np.logical_and(finalp>= xmin, finalp<= xmin+0.5)))
+endcolp=(np.where(np.logical_and(finalp>= xmax, finalp<= xmax+0.5)))
+prsr=finalp[startcolp[0][0]:endcolp[0][0]]
 len(prsr)
-
 tmin
 tmax
 #----------------------------------------------------------------------------
@@ -90,7 +89,7 @@ with open (net[-1]+"_"+sta+"_"+cha+"_"+str(UTCDateTime(tmin))[:-1]+"power.txt",'
     for i in range(len(powe)):
         ti=str(UTCDateTime(mdates.num2date(fint_frames[i])))[:-1]
         f.write(ti+" "+str(powe[i])+"\n")
-st = read("/home/sjohn/AON_PROJECT/O14K/AK_O14K_BHZ_2020-05-18T00:00:00.000000power.txt")
+st = read("/home/sjohn/AON_PROJECT/O14K/"+net[-1]+"_"+sta+"_"+cha+"_"+str(UTCDateTime(tmin))[:-1]+"power.txt")
 #--------------------------------------------------------------------------------------
 sta1=sta+"wnd"+"__"
 finalw
@@ -112,7 +111,7 @@ sta1=sta+"prsr"+"__"
 samp1=" "+str(len(powe))+" samples, "
 sampr="0.0002777777777777 sps, "
 cha1="LDV_M,"
-startt1=str(UTCDateTime(tmin))[:-1]+",  SLIST, FLOAT, COUNTS\n"
+startt1=str(UTCDateTime(mdates.num2date(prsr[0,0])))[:-1]+",  SLIST, FLOAT, COUNTS\n"
 header=net1+sta1+cha1+samp1+sampr+startt1
 print(header)
 tminp=mdates.num2date(prsr[0,0])
@@ -153,6 +152,6 @@ k
 st+=read("/home/sjohn/AON_PROJECT/O14K/"+k)
 #----------------------------------------------------------------------------------------
 st
-st.write("O14K_"+str(UTCDateTime(tmin))+str(UTCDateTime(tmax))+".MSEED", format="MSEED")  
+st.write("O14K_"+str(UTCDateTime(tmin))+str(UTCDateTime(tmax))+str(freq[j])+".MSEED", format="MSEED")  
 
 
