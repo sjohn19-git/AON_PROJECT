@@ -11,61 +11,58 @@ import xarray as xr
 import pygrib
 import numpy as np
 import matplotlib.pyplot as plt
+import cdsapi
+
+c = cdsapi.Client()
+
+os.chdir("")
 
 
-grid = pygmt.datasets.load_earth_relief(resolution="01d")
-lat=grid["lat"]
-lon=grid["lon"]
+
+
+c.retrieve(
+    'reanalysis-era5-single-levels',
+    {
+        'product_type': 'reanalysis',
+        'variable': 'significant_height_of_combined_wind_waves_and_swell',
+        'year': '2018',
+        'month': '01',
+        'day': '01',
+        'time': '00:00',
+        'format': 'grib',
+    },
+    'download.grib')
 
 
 
-grib = "/Users/sebinjohn/Downloads/multi_1.ak_4m.hs.201609.grb2"
-grib1="/Users/sebinjohn/Downloads/multi_1.ak_10m.hs.201903.grb2"
-grbs = pygrib.open(grib)
+grib="/Users/sebinjohn/Downloads/adaptor.mars.internal-1638789059.0528095-23607-6-cac177c2-831e-45e6-8366-424c3cd6dd2a.grib"
+grbs=pygrib.open(grib)
 grb=grbs[1]
-grbs1=pygrib.open(grib1)
-grb1=grbs1[1]
-grb1
+grb
+
 
 
 data = grb.values
 latg, long = grb.latlons()
 np.shape(data)
-lat=latg[:,0]
-lon=long[0,:]
-np.shape(lat)
-np.shape(lon)
-np.shape(data)
-np.amax(data)
-np.amin(data)
+lat=(latg[:,0])
+lon=(long[0,:])
 
 
-
-data1 = grb1.values
-latg1, long1 = grb1.latlons()
-np.shape(data1)
-lat1=(latg1[:,0])
-lon1=(long1[0,:])
-
-
-
-grid1 = xr.DataArray(
-    data1, dims=["lat", "lon"], coords={"lat": lat1, "lon": lon1}
-)
 
 grid = xr.DataArray(
     data, dims=["lat", "lon"], coords={"lat": lat, "lon": lon}
 )
 
-pygmt.makecpt(cmap="hot",output="expll.cpt", series=[np.amin(data),np.amax(data)],reverse=True)
-pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[np.amin(data1),np.amax(data1)],reverse=True)
+
+pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[np.amin(data),np.amax(data)],reverse=True)
 
 
 fig = pygmt.Figure()
-fig.coast(region=[-190,-130, 48, 73], projection="S200/90/20c",shorelines=True)
-fig.grdimage(grid=grid1,projection="S200/90/20c",frame="a", cmap="expll1.cpt",nan_transparent=True)
-# fig.grdimage(grid=grid,projection="S200/90/20c", frame="a", cmap="expll.cpt",nan_transparent=True)
+fig.coast(region="g", projection="X6i/6i",shorelines=True)
+fig.grdimage(grid=grid,projection="X6i/6i",frame="a", cmap="expll1.cpt",nan_transparent=True)
+fig.colorbar(projection="X6i/6i",frame="a", cmap="expll1.cpt")
+#fig.grdimage(grid=grid,projection="S200/90/20c", frame="a", cmap="expll.cpt",nan_transparent=True)
+fig.show(method="external")
 
-
-fig.show()
 

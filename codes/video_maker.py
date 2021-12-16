@@ -1,6 +1,6 @@
 import os 
 import pygmt
-import dill
+#import dill
 import csv
 import pandas as pd
 from obspy import UTCDateTime
@@ -10,6 +10,11 @@ import glob
 from scipy.integrate import trapz 
 import numpy as np
 import pickle
+import pygrib
+import xarray as xr
+import numpy as np
+import matplotlib.pyplot as plt
+import cdsapi
 
 long=["-161.2638","-133.121","-136.232","-154.4524",
       "-131.615","-147.4031","-156.4394","-158.9593",
@@ -37,7 +42,9 @@ long=["-161.2638","-133.121","-136.232","-154.4524",
       "-150.223099","-145.7749","-148.860138","-150.741394",
       "-145.234207","-145.234207","-161.1943","-150.746704",
       "-139.6369","-153.1318","-143.2841","-146.3399",
-      "-169.5484"
+      "-169.5484","-159.589493","-166.2011","-143.092606",
+      "-175.103104","-177.1296","178.5112","-178.039",
+      "-169.8951"
       ]
 lat=["59.2533","56.1146","57.9616","57.5665",
      "55.3279","59.9979","59.1953","61.0224",
@@ -65,7 +72,9 @@ lat=["59.2533","56.1146","57.9616","57.5665",
      "60.5117","61.1292","63.405655","59.741699",
      "66.565697","66.565697","68.6483","61.4636",
      "59.9534","61.8823","60.1205","59.4296",
-     "56.6011"
+     "56.6011","55.831001","60.3849","60.7523",
+     "52.730801","51.9303","51.9484","51.8339",
+     "52.8235"
      ]
 stationo=["final_O14K.npy","final_U33K.npy","final_S31K.npy","final_R18K.npy",
           "final_V35K.npy","final_P23K.npy","final_P17K.npy","final_M16K.npy",
@@ -93,7 +102,10 @@ stationo=["final_O14K.npy","final_U33K.npy","final_S31K.npy","final_R18K.npy",
           "final_SLK.npy","final_DIV.npy","final_RND.npy","final_BRSE.npy",
           "final_FYU.npy","final_TGL.npy","final_C18K.npy","final_SSN.npy",
           "final_BCP.npy","final_M20K.npy","final_BGLC.npy","final_Q23K.npy",
-          "final_P08K.npy"
+          "final_P08K.npy","final_CHN.npy","final_M11K.npy","final_CRQ.npy",
+          "final_SMY.npy","final_KINC.npy","final_LSSA.npy","final_TASE.npy",
+          "final_CLES.npy"
+          
           ]
 env=["notebook_env_O14K.db","notebook_env_U33K.db","notebook_env_S31K.db","notebook_env_R18K.db",
      "notebook_env_V35K.db","notebook_env_P23K.db","notebook_env_P17K.db","notebook_env_M16K.db",
@@ -121,15 +133,27 @@ env=["notebook_env_O14K.db","notebook_env_U33K.db","notebook_env_S31K.db","noteb
      "notebook_env_SLK.db","notebook_env_DIV.db","notebook_env_RND.db","notebook_env_BRSE.db",
      "notebook_env_FYU.db","notebook_env_TGL.db","notebook_env_C18K.db","notebook_env_SSN.db",
      "notebook_env_BCP.db","notebook_env_M20K.db","notebook_env_BGLC.db","notebook_env_Q23K.db",
-     "notebook_env_P08K.db"
+     "notebook_env_P08K.db","notebook_env_CHN.db","notebook_env_M11K.db","notebook_env_CRQ.db",
+     "notebook_env_SMY.db","notebook_env_KINC.db","notebook_env_LSSA.db","notebook_env_TASE.db",
+     "notebook_env_CLES.db"
      ]
-
 os.chdir("/home/sjohn/AON_PROJECT/Video Making")
+with open(("metadta.pkl"), 'wb') as f:  # Python 3: open(..., 'wb')
+          pickle.dump([long,lat,stationo ,env], f)
+
+freq=[]
+name= pd.read_xml("pdf0.xml", xpath="/PsdRoot/Psds[1]/Psd[1]/value[@freq]")
+for i in range (95):
+    freq.append(name.iloc[i]['freq'])
+freq.append(19.740300000000000)
+len(freq)
+
+
 pygmt.makecpt(cmap="hot",output="exp.cpt", series=[-150,-90,0.005],reverse=True)
 grid = pygmt.datasets.load_earth_relief(resolution="10m", region=[-172, -135, 52, 73])
 datapath="/home/sjohn/Data/*/"
-st=UTCDateTime(2019,11,21)
-et=st+3600*2
+st=UTCDateTime(2019,11,1)
+et=UTCDateTime(2019,12,1)
 windw=2
 tim_len=int((et-st)/(3600*windw))
 smth_intg=np.zeros((len(stationo),tim_len))
@@ -145,22 +169,66 @@ def map_plo(st,et,co):
         print(tim)
         integral=text_maker(tim,co)
         co+=1
-        ma_pic_generator(tim)
-  
-        
+        grid,data_wave=wave(tim)
+        ma_pic_generator(tim,grid,data_wave)
 
-def ma_pic_generator(tim):
+        
+def wave(tim):
+    c = cdsapi.Client()
+    os.chdir("/home/sjohn/Data/wave")
+    files=os.listdir()
+    if str(tim)[0:14]+"00"+".grib" not in files:
+        print(str(tim)[0:14]+"00"+".grib not found Downloading...")
+        c.retrieve(
+            'reanalysis-era5-single-levels',
+            {
+                'product_type': 'reanalysis',
+                'variable': 'significant_height_of_combined_wind_waves_and_swell',
+                'year': str(tim.year),
+                'month': str(tim.month),
+                'day': str(tim.day),
+                'time': tim.ctime()[11:14]+"00",
+                'format': 'grib',
+                },
+            str(tim)[0:14]+"00"+".grib")
+    tim_wav=str(tim)[0:14]+"00"
+    grib=str(tim)[0:14]+"00"+".grib"
+    grbs=pygrib.open(grib)
+    grb=grbs[1]
+    data_wave = grb.values
+    latg, long = grb.latlons()
+    lat=(latg[:,0])
+    lon=(long[0,:])
+    grid = xr.DataArray(
+        data_wave, dims=["lat", "lon"], coords={"lat": lat, "lon": lon}
+        )
+    return grid,data_wave
+    
+    
+
+def ma_pic_generator(tim,grid,data_wave):
     os.chdir("/home/sjohn/AON_PROJECT/Video Making")
     data= pd.read_csv("mapplo.csv")
     fig=pygmt.Figure()
-    fig.basemap(frame=True,region=[-190,-130, 48, 73], projection="S200/90/20c")
-    #fig.grdimage(grid='@earth_relief_01m.grd ',region=[-190,-130, 48, 73],projection="S200/90/20c", cmap="light.cpt",frame="a")
-    fig.coast(region=[-190,-130, 48, 73], projection="S200/90/20c",shorelines=True)
-    fig.plot(x=data['long'],y=data['lat'],color=data['powe'],style="c0.4c",cmap="exp.cpt",pen="black")
-    fig.text(text=str(tim),x=-160,y=72)
-    fig.colorbar(cmap="exp.cpt",frame='af+l"PSD (db)"')
-    fig.show()
-    fig.savefig(str(tim)+".jpg")
+    with fig.subplot(nrows=1, ncols=2, figsize=("45c", "60c"), frame="lrtb",clearance='2c',title=""):
+        with fig.set_panel(panel=0): 
+            #pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[np.amin(data_wave),np.amax(data_wave)],reverse=True)
+            fig.basemap(frame=True,region=[150,260,30,73], projection="L-159/35/33/45/22c")
+            fig.coast(region=[150,260, 30, 73], projection="L-159/35/33/45/22c",shorelines=True)
+           # fig.grdimage(grid=grid,projection="S200/90/20c", cmap="expll1.cpt",nan_transparent=True)
+            fig.colorbar(cmap="exp.cpt",frame='af+l"PSD (db)"',projection="L-159/35/33/45/22c")
+            fig.grdimage(grid=grid,region=[150,260, 30, 73],projection="L-159/35/33/45/22c", cmap="expll1.cpt",frame="a",nan_transparent=True)
+            fig.plot(x=data['long'],y=data['lat'],color=data['powe'],style="c0.35c",cmap="exp.cpt",pen="black", projection="L-159/35/33/45/22c")
+            fig.text(text=str(tim),x=-160,y=72,projection="L-159/35/33/45/22c")
+        with fig.set_panel(panel=1): 
+            pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[np.amin(data_wave),np.amax(data_wave)],reverse=True)
+            fig.coast(region="g", projection="Cyl_stere/180/-40/20c",shorelines=True)
+            fig.grdimage(grid=grid,projection="Cyl_stere/180/-40/20c",frame="a", cmap="expll1.cpt",nan_transparent=True)
+            fig.colorbar(projection="Cyl_stere/180/-40/20c", cmap="expll1.cpt",frame='af+l"Significant Wave Height (m)"')
+            fig.text(text=str(tim),x=190,y=85,projection="Cyl_stere/180/-40/20c")
+        fig.show()
+        #fig.show(method="external")
+        fig.savefig(str(tim)+".jpg")
 
 
 def text_maker(tim,co):
@@ -196,10 +264,11 @@ def text_maker(tim,co):
           smthd_intgeral=float("Nan")
       smth_intg[i,co]=smthd_intgeral
       rows.append([str(long[i]),str(lat[i]),str(smooth)])
-      with open("mapplo.csv", 'w') as csvfile:
-          csvwriter = csv.writer(csvfile) 
-          csvwriter.writerow(fields)
-          csvwriter.writerows(rows)
+  os.chdir("/home/sjohn/AON_PROJECT/Video Making")
+  with open("mapplo.csv", 'w') as csvfile:
+      csvwriter = csv.writer(csvfile) 
+      csvwriter.writerow(fields)
+      csvwriter.writerows(rows)
   return smth_intg
      
 def mean(res):
@@ -226,28 +295,28 @@ def convert_pictures_to_video(pathIn, pathOut, fps, time):
     for i in range (len(files)):
         '''reading images'''
         img=cv2.imread(files[i])
-        img=cv2.resize(img,(1400,1000))
         height, width, layers = img.shape
         size=(width,height)
         for k in range (time):
             frame_array.append(img)
             print(frame_array)
-    out=cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'avc1'), fps,size)
+    out=cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'VP80'), fps,size)
     for i in range(len(frame_array)):
         out.write(frame_array[i])
     out.release()
 
 # Example:
-directory="/Users/sebinjohn/AON_PROJECT/Video Making"
+directory="/home/sjohn/AON_PROJECT/Video Making"
 pathIn=directory+'/*.jpg'
 pathOut=directory+"/"+'video_EX8.mp4'
-fps=9
+fps=8
 time=1 # the duration of each picture in the video
 
 
 
 
 map_plo(st,et,0)
+
 
 
 convert_pictures_to_video(pathIn, pathOut, fps, time)
@@ -261,14 +330,22 @@ len(env)
 pics=glob.glob(join(directory+"/*jpg"))
 for ele in pics:
     os.remove(ele)
- 
-    time_frame=[]
-    st=UTCDateTime(2019,8,20)
-    et=UTCDateTime(2019,9,19)
-    windw=2
-    for i in range (int((et-st)/(3600*windw))):
-        time_frame.append(st.matplotlib_date)
-        st=st+(3600*windw)
+time_frame=[]
+for i in range (int((et-st)/(3600*windw))):
+    time_frame.append(st)
+    st=st+(3600*windw)  
+ tim=time_frame[2]
+c = cdsapi.Client()
+c.retrieve(
+    'reanalysis-era5-single-levels',
+    {
+     'product_type': 'reanalysis',
+     'variable': 'significant_height_of_combined_wind_waves_and_swell',
+     'year': str(tim.year),
+     'month': str(tim.month),
+     'day': str(tim.day),
+     'time': tim.ctime()[11:14]+"00",
+     'format': 'grib',
+              },
+    str(tim)[0:14]+"00"+".grib")
 
- with open((str(sta)+".pkl"), 'wb') as f:  # Python 3: open(..., 'wb')
-          pickle.dump([sta, starttimeta, endtimeta,starttimeak,endtimeak,sta,cha,loc], f)
