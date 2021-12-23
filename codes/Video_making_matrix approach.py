@@ -16,6 +16,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cdsapi
 from medfilt import medfilt
+from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
+import matplotlib.dates as mdates
 
 long=["-161.2638","-133.121","-136.232","-154.4524",
       "-131.615","-147.4031","-156.4394","-158.9593",
@@ -45,7 +47,7 @@ long=["-161.2638","-133.121","-136.232","-154.4524",
       "-139.6369","-153.1318","-143.2841","-146.3399",
       "-169.5484","-159.589493","-166.2011","-143.092606",
       "-175.103104","-177.1296","178.5112","-178.039",
-      "-169.8951"
+      "-169.8951","-162.600006","-155.7251","-156.6132"
       ]
 lat=["59.2533","56.1146","57.9616","57.5665",
      "55.3279","59.9979","59.1953","61.0224",
@@ -75,7 +77,7 @@ lat=["59.2533","56.1146","57.9616","57.5665",
      "59.9534","61.8823","60.1205","59.4296",
      "56.6011","55.831001","60.3849","60.7523",
      "52.730801","51.9303","51.9484","51.8339",
-     "52.8235"
+     "52.8235","66.895103","67.0486","68.7132"
      ]
 stationo=["final_O14K.npy","final_U33K.npy","final_S31K.npy","final_R18K.npy",
           "final_V35K.npy","final_P23K.npy","final_P17K.npy","final_M16K.npy",
@@ -105,7 +107,7 @@ stationo=["final_O14K.npy","final_U33K.npy","final_S31K.npy","final_R18K.npy",
           "final_BCP.npy","final_M20K.npy","final_BGLC.npy","final_Q23K.npy",
           "final_P08K.npy","final_CHN.npy","final_M11K.npy","final_CRQ.npy",
           "final_SMY.npy","final_KINC.npy","final_LSSA.npy","final_TASE.npy",
-          "final_CLES.npy"
+          "final_CLES.npy","final_KOTZ.npy","final_F20K.npy","final_D20K.npy"
           
           ]
 env=["notebook_env_O14K.db","notebook_env_U33K.db","notebook_env_S31K.db","notebook_env_R18K.db",
@@ -136,9 +138,11 @@ env=["notebook_env_O14K.db","notebook_env_U33K.db","notebook_env_S31K.db","noteb
      "notebook_env_BCP.db","notebook_env_M20K.db","notebook_env_BGLC.db","notebook_env_Q23K.db",
      "notebook_env_P08K.db","notebook_env_CHN.db","notebook_env_M11K.db","notebook_env_CRQ.db",
      "notebook_env_SMY.db","notebook_env_KINC.db","notebook_env_LSSA.db","notebook_env_TASE.db",
-     "notebook_env_CLES.db"
+     "notebook_env_CLES.db","notebook_env_KOTZ.db","notebook_env_F20K.db","notebook_env_D20K.db"
      ]
-os.chdir("/home/sjohn/AON_PROJECT/Video Making")
+
+
+os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")
 with open(("metadta.pkl"), 'wb') as f:  # Python 3: open(..., 'wb')
           pickle.dump([long,lat,stationo ,env], f)
 
@@ -151,11 +155,11 @@ len(freq)
 
 
 pygmt.makecpt(cmap="hot",output="exp.cpt", series=[-150,-90,0.005],reverse=True)
-pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[np.amin(data_wave),np.amax(data_wave)],reverse=True)
+pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[0,14],reverse=True)
 grid = pygmt.datasets.load_earth_relief(resolution="10m", region=[-172, -135, 52, 73])
-datapath="/home/sjohn/Data/*/"
-st=UTCDateTime(2019,11,1)
-et=UTCDateTime(2019,11,2)
+datapath="/Users/sebinjohn/AON_PROJECT/Data/*/"
+st=UTCDateTime(2019,10,1)
+et=UTCDateTime(2019,11,1)
 windw=1
 tim_len=int((et-st)/(3600*windw))
 smth_intg=np.zeros((len(stationo),tim_len))
@@ -176,12 +180,34 @@ def map_plo(st,et):
         mean_timeseries=np.dstack((mean_timeseries,mea_appen))   
         mean_timeseries = mean_timeseries.astype('float64')
         median_timeseries=np.copy(mean_timeseries)
-    for j in range(1,np.shape(mean_timeseries)[2]):
+        #median_timeseries[median_timeseries==0]=np.nan
+        np.count_nonzero(np.isnan(median_timeseries))
+    for j in range(1,np.shape(mean_timeseries)[1]):
         median_timeseries[0,j,1:]=medfilt(median_timeseries[0,j,1:],7)
+        print("interpolating station "+stationo[j-1][6:])
+        interp_inde=np.array([])
+      
+        interp_x=median_timeseries[0,j,1:]
+        datagap=np.where(interp_x==0)[0]
+        data_x=np.where(interp_x!=0)[0]
+        for i in range(len(data_x)-1):
+            if data_x[i+1]-data_x[i]<12 and data_x[i+1]-data_x[i]>1:
+                interp_inde=np.append(interp_inde,np.array( [i for i in range(int(data_x[i])+1,int(data_x[i+1]))]))
+            else:
+                continue
+        if len(interp_inde)>1:
+            interp=np.interp(interp_inde, data_x.reshape(np.shape(data_x)[0]), interp_x[data_x].reshape(np.shape(data_x)[0]))
+            interp_inde=(interp_inde+1).astype("int32")
+            median_timeseries[0,j,interp_inde]=interp
+        else:
+            continue
+    # median_timeseries=np.nan_to_num(median_timeseries)
     median_timeseries[median_timeseries==0]=-180
     for i in range(len(time_frame)):
         tim=time_frame[i]
+        print("searching for wave height for"+str(tim))
         grid,data_wave=wave(tim)
+        print("plotting "+str(tim))
         ma_pic_generator(tim,grid,median_timeseries,i)
     return mean_timeseries,median_timeseries
 
@@ -190,7 +216,7 @@ def map_plo(st,et):
         
 def wave(tim):
     c = cdsapi.Client()
-    os.chdir("/home/sjohn/Data/wave")
+    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/wave")
     files=os.listdir()
     if str(tim)[0:14]+"00"+".grib" not in files:
         print(str(tim)[0:14]+"00"+".grib not found Downloading...")
@@ -222,32 +248,29 @@ def wave(tim):
     
 
 def ma_pic_generator(tim,grid,median_timeseries,z):
-    os.chdir("/home/sjohn/AON_PROJECT/Video Making")
-    data= pd.read_csv("mapplo.csv")
+    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")
     fig=pygmt.Figure()
     with fig.subplot(nrows=1, ncols=2, figsize=("45c", "60c"), frame="lrtb",clearance='2c',title=""):
         with fig.set_panel(panel=0): 
-            #pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[np.amin(data_wave),np.amax(data_wave)],reverse=True)
-            fig.basemap(frame=True,region=[150,260,30,73], projection="L-159/35/33/45/22c")
+            #fig.basemap(frame=True,region="g", projection="L-159/35/33/45/22c")
             fig.grdimage(grid=grid,region=[150,260, 30, 73],projection="L-159/35/33/45/22c", cmap="expll1.cpt",frame="a",nan_transparent=True)
             fig.coast(region=[150,260, 30, 73], projection="L-159/35/33/45/22c",shorelines=True)
-           # fig.grdimage(grid=grid,projection="S200/90/20c", cmap="expll1.cpt",nan_transparent=True)
             fig.colorbar(cmap="exp.cpt",frame='af+l"PSD (db)"',projection="L-159/35/33/45/22c")  
-            fig.plot(x=median_timeseries[1,1:,z+1],y=median_timeseries[2,1:,z+1],color=median_timeseries[0,1:,z+1],style="c0.25c",cmap="exp.cpt",pen="black", projection="L-159/35/33/45/22c")
+            fig.plot(x=median_timeseries[1,1:,z+1],y=median_timeseries[2,1:,z+1],color=median_timeseries[0,1:,z+1],style="c0.30c",cmap="exp.cpt",pen="black", projection="L-159/35/33/45/22c")
             fig.text(text=str(tim),x=-160,y=72,projection="L-159/35/33/45/22c")
         with fig.set_panel(panel=1): 
             fig.coast(region="g", projection="Cyl_stere/180/-40/20c",shorelines=True)
             fig.grdimage(grid=grid,projection="Cyl_stere/180/-40/20c",frame="a", cmap="expll1.cpt",nan_transparent=True)
             fig.colorbar(projection="Cyl_stere/180/-40/20c", cmap="expll1.cpt",frame='af+l"Significant Wave Height (m)"')
             fig.text(text=str(tim),x=190,y=85,projection="Cyl_stere/180/-40/20c")
-        #fig.show()
-        #fig.show(method="external")
+        fig.show()
         fig.savefig(str(tim)+".jpg")
+        print("saved "+ str(tim)+".jpg")
 
 
 def mean_integ(tim,mea_appen,integ_appen):
   for i in range(len(long)):
-      os.chdir(join("/home/sjohn/Data",env[i].split("_")[-1].split(".")[-2]))
+      os.chdir(join("/Users/sebinjohn/AON_PROJECT/Data",env[i].split("_")[-1].split(".")[-2]))
       sta=env[i].split("_")[-1].split(".")[-2]
       with open((str(sta)+".pkl"),"rb") as f:
          sta, starttimeta, endtimeta,starttimeak,endtimeak,sta,cha,loc = pickle.load(f) 
@@ -289,16 +312,15 @@ def convert_pictures_to_video(pathIn, pathOut, fps, time):
         size=(width,height)
         for k in range (time):
             frame_array.append(img)
-            print(frame_array)
     out=cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'VP80'), fps,size)
     for i in range(len(frame_array)):
         out.write(frame_array[i])
     out.release()
 
 # Example:
-directory="/home/sjohn/AON_PROJECT/Video Making"
+directory="//Users/sebinjohn/AON_PROJECT/Data/Video Making"
 pathIn=directory+'/*.jpg'
-pathOut=directory+"/"+'video_EX8.mp4'
+pathOut=directory+"/"+str(st)+"-"+str(et)+".avi"
 fps=8
 time=1 # the duration of each picture in the video
 
@@ -320,22 +342,34 @@ len(env)
 pics=glob.glob(join(directory+"/*jpg"))
 for ele in pics:
     os.remove(ele)
-time_frame=[]
-for i in range (int((et-st)/(3600*windw))):
-    time_frame.append(st)
-    st=st+(3600*windw)  
- tim=time_frame[2]
-c = cdsapi.Client()
-c.retrieve(
-    'reanalysis-era5-single-levels',
-    {
-     'product_type': 'reanalysis',
-     'variable': 'significant_height_of_combined_wind_waves_and_swell',
-     'year': str(tim.year),
-     'month': str(tim.month),
-     'day': str(tim.day),
-     'time': tim.ctime()[11:14]+"00",
-     'format': 'grib',
-              },
-    str(tim)[0:14]+"00"+".grib")
+    os.remove(ele)
+#--------------------------------------------------------------------------------
+time=[]
+for ele in time_frame:
+    time.append(ele.matplotlib_date)
+date_format=mdates.DateFormatter('%d,%b,%y')
+
+fig,ax1=plt.subplots(3,4,figsize=(40,25))
+
+for i in range(1,5):
+    ax1[0][i-1].scatter(time,mean_timeseries[0,i,1:],color="blue",label="raw data")
+    ax1[0][i-1].scatter(time,median_timeseries[0,i,1:],color="red",label="processed data")
+    ax1[0][i-1].legend()
+    ax1[0][i-1].xaxis.set_major_formatter(date_format)
+    ax1[0][i-1].set_ylabel("power in db")
+    ax1[0][i-1].set_title(stationo[i].split("_")[-1].split('.')[-2])
+for i in range(5,9):
+    ax1[1][i-5].scatter(time,mean_timeseries[0,i,1:],color="blue",label="raw data")
+    ax1[1][i-5].scatter(time,median_timeseries[0,i,1:],color="red",label="processed data")
+    ax1[1][i-5].legend()
+    ax1[1][i-5].xaxis.set_major_formatter(date_format)
+    ax1[1][i-5].set_ylabel("power in db")
+    ax1[1][i-5].set_title(stationo[i].split("_")[-1].split('.')[-2])
+for i in range(9,13):
+    ax1[2][i-9].scatter(time,mean_timeseries[0,i,1:],color="blue",label="raw data")
+    ax1[2][i-9].scatter(time,median_timeseries[0,i,1:],color="red",label="processed data")
+    ax1[2][i-9].legend()
+    ax1[2][i-9].xaxis.set_major_formatter(date_format)
+    ax1[2][i-9].set_ylabel("power in db")
+    ax1[2][i-9].set_title(stationo[i].split("_")[-1].split('.')[-2])
 
