@@ -1,8 +1,0 @@
-import os
-import glob
-import shutil
-
-folders=[]
-for path,dire,name ob.glob("//scratch/sjohn/spectrogram/*"):
-    folders.append(path)
-
