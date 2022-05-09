@@ -27,10 +27,9 @@ inv = fdsn_client.get_stations(
     starttime=t1, endtime=t2, level='response')
 # define a filter band to prevent amplifying noise during the deconvolution
 pre_filt = (0.08,0.1,0.2,0.22)
-st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt,taper=True)
+st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
 st.detrend(type="demean")
-
-
+st.taper(0.5, type='cosine', max_length=1, side='both')
 st0=st #add trace to new stream
 
 st = fdsn_client.get_waveforms(
@@ -43,6 +42,7 @@ inv = fdsn_client.get_stations(
 pre_filt = (0.005, 0.006, 30.0, 35.0)
 st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
 st.detrend(type="demean")
+st.taper(0.5, type='cosine', max_length=1, side='both')
 st0+=st
 
 st = fdsn_client.get_waveforms(
@@ -55,6 +55,7 @@ inv = fdsn_client.get_stations(
 pre_filt = (0.08,0.1,0.2,0.22)
 st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
 st.detrend(type="demean")
+st.taper(0.5, type='cosine', max_length=1, side='both')
 st0+=st
 
 st = fdsn_client.get_waveforms(
@@ -67,6 +68,7 @@ inv = fdsn_client.get_stations(
 pre_filt = (0.08,0.1,0.2,0.22)
 st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
 st.detrend(type="demean")
+st.taper(0.5, type='cosine', max_length=1, side='both')
 st0+=st
 
 st0.plot()
