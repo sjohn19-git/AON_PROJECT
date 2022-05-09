@@ -113,7 +113,7 @@ kwargs = dict(
     # sliding window properties
     win_len=1.0, win_frac=0.05,
     # frequency properties
-    frqlow=0.2, frqhigh=0.4, prewhiten=0,
+    frqlow=1, frqhigh=8, prewhiten=0,
     # restrict output
     semb_thres=-1e9, vel_thres=-1e9, timestamp='mlabday',
     stime=stime, etime=etime
