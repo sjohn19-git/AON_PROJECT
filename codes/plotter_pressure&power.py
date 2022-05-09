@@ -14,7 +14,7 @@ from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from mpl_toolkits.axisartist.parasite_axes import HostAxes, ParasiteAxes
 
 #--------------------------------------------------------------------------------
-dill.load_session("notebook_env.db")
+dill.load_session("notebook_env_O14K.db")
 with open('final.npy', 'rb') as g:
     final=np.load(g)
 num_rows, num_cols =final.shape
@@ -26,14 +26,14 @@ time=np.arange(startt,endt,l)
 np.shape(time)
 pmin=(np.amin(final))
 pmax=np.amax(final)
-date_format=mdates.DateFormatter('%d,%b,%y')
-date_format1=mdates.DateFormatter('%d,%b,%y')
+date_format=mdates.DateFormatter('%b')
+date_format1=mdates.DateFormatter('%b')
 date_format
-freq=[]
-name= pd.read_xml("pdf0.xml", xpath="/PsdRoot/Psds[1]/Psd[1]/value[@freq]")
-for i in range (95):
-    freq.append(name.iloc[i]['freq'])
-freq.append(19.740300000000000)
+#freq=[]
+#name= pd.read_xml("pdf0.xml", xpath="/PsdRoot/Psds[1]/Psd[1]/value[@freq]")
+# for i in range (95):
+#     freq.append(name.iloc[i]['freq'])
+#freq.append(19.740300000000000)
 len(freq)
 with open('finalp.npy', 'rb') as g:
     finalp=np.load(g)
@@ -46,13 +46,17 @@ mintp=min(fint_frames)
 maxtp=max(fint_frames)
 
 #---------------------------------------------------------------------
-j=53
-xmin=18383
+j=42
+xmin=18262
 xmax=18628
+font = {'family' : 'normal',
+        'weight' : 'normal',
+        'size'   : 18}
 
+plt.rc('font', **font)
 fig=plt.figure()
 
-fig.set_figheight(10)
+fig.set_figheight(14)
 fig.set_figwidth(16)
 
 host = fig.add_axes([2, 0.1, 0.7, 0.3], axes_class=HostAxes)
@@ -67,19 +71,19 @@ par1.axis["right"].label.set_visible(True)
 par1.axis["bottom2"] = par1.new_fixed_axis(loc="bottom", offset=(0, -25))
 par1.axis["bottom2"].set_visible(False)
 host.set_xlim(xmin,xmax)
-host.set_ylim(-80,-160)
+host.set_ylim(-100,-150)
 par1.set_xlim(xmin,xmax)
-par1.set_ylim([0.8,1])
-par1.set_ylabel("Pressure (atm)")
-host.set_ylabel("power ("+str(freq[j])+"Hz)")
-host.title.set_text(sta+"_"+cha+" "+str(UTCDateTime((mdates.num2date(xmin)).strftime('%Y-%m-%d')))+" - "+str(UTCDateTime((mdates.num2date(xmax)).strftime('%Y-%m-%d'))))
+par1.set_ylim([0.85,0.95])
+#par1.set_ylabel("Pressure (atm)")
+#host.set_ylabel("power ("+str(freq[j])+"Hz)")
+#host.title.set_text(sta+"_"+cha+" "+str(UTCDateTime((mdates.num2date(xmin)).strftime('%Y-%m-%d')))+" - "+str(UTCDateTime((mdates.num2date(xmax)).strftime('%Y-%m-%d'))))
 x=(fint_frames[1])
 y=(final[45,1])
 p1 = host.scatter(fint_frames[:],final[j,:],s=0.5,label="power (db)",c="red")
 p2 =par1.scatter(finalp[:,0],finalp[:,1], s=0.5,label="pressure (atm)",c="blue")
 host.xaxis.set_major_formatter(date_format)
 host.xaxis.set_minor_formatter(date_format1)
-host.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=(SU)))
-plt.setp(host.axis["bottom"].major_ticklabels, rotation=40,ha="right")
+#host.xaxis.set_major_locator(mdates.MonthLocator(2,4,6,8))
+#plt.setp(host.axis["bottom"].major_ticklabels, rotation=40,ha="right")
 host.legend()
 fig.savefig('pressure&powerO14K'+str(freq[j])+".eps", bbox_inches='tight')

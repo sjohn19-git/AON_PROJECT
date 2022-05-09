@@ -22,7 +22,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")
+os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making/primary_video")
 
 
 with open("metadta.pkl","rb") as f:
@@ -36,12 +36,12 @@ freq.append(19.740300000000000)
 len(freq)
 
 
-pygmt.makecpt(cmap="hot",output="exp.cpt", series=[-150,-90,0.005],reverse=True)
+pygmt.makecpt(cmap="hot",output="exp.cpt", series=[-165,-105,0.005],reverse=True)
 pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[0,14],reverse=True)
-grid = pygmt.datasets.load_earth_relief(resolution="10m", region=[-172, -135, 52, 73])
+#grid = pygmt.datasets.load_earth_relief(resolution="10m", region=[-172, -135, 52, 73])
 datapath="/Users/sebinjohn/AON_PROJECT/Data/*/"
-st=UTCDateTime(2019,4,1,1)
-et=UTCDateTime(2019,4,1,2)
+st=UTCDateTime(2019,11,1)
+et=UTCDateTime(2019,12,1)
 windw=1
 tim_len=int((et-st)/(3600*windw))
 smth_intg=np.zeros((len(stationo),tim_len))
@@ -65,7 +65,7 @@ def map_plo(st,et):
         #median_timeseries[median_timeseries==0]=np.nan
         np.count_nonzero(np.isnan(median_timeseries))
     for j in range(1,np.shape(mean_timeseries)[1]):
-        median_timeseries[0,j,1:]=medfilt(median_timeseries[0,j,1:],7)
+        median_timeseries[0,j,1:]=medfilt(median_timeseries[0,j,1:],13)
         print("interpolating station "+stationo[j-1][6:])
         interp_inde=np.array([])
         interp_x=median_timeseries[0,j,1:]
@@ -131,7 +131,7 @@ def wave(tim):
     
 
 def ma_pic_generator(tim,grid,median_timeseries,z):
-    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")
+    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making/primary_video")
     fig=pygmt.Figure()
     with fig.subplot(nrows=1, ncols=2, figsize=("45c", "60c"), frame="lrtb",clearance='2c',title=""):
         with fig.set_panel(panel=0): 
@@ -147,6 +147,7 @@ def ma_pic_generator(tim,grid,median_timeseries,z):
             fig.colorbar(projection="Cyl_stere/180/-40/20c", cmap="expll1.cpt",frame='af+l"Significant Wave Height (m)"')
             fig.text(text=str(tim),x=190,y=85,projection="Cyl_stere/180/-40/20c")
         fig.savefig(str(tim)+"wave.jpg")
+ 
 
 def plane_fitting(tim,grid,median_timeseries,z):
         xs=median_timeseries[1,1:,z+1].copy()
@@ -213,11 +214,12 @@ def plane_fitting(tim,grid,median_timeseries,z):
             pen="2p",
             color="red3",
         )
+        os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making/primary_video")
         fig2.savefig(str(tim)+"direction.jpg")
 
 
 def fig_merge(tim):
-    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")
+    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making/primary_video")
     image1 = Image.open(str(tim)+"wave.jpg")
     image2 = Image.open(str(tim)+"plane.jpg")
     image3 = Image.open(str(tim)+"direction.jpg")
@@ -242,7 +244,7 @@ def mean_integ(tim,mea_appen,integ_appen):
       j=int((tim-starttimeta)/(3600))
       with open((glob.glob(join(datapath+stationo[i]))[0]), 'rb') as g:
           final=np.load(g)
-      res=final[34:42,j]
+      res=final[29:34,j]
       out_mean=mean(res)
       out_integ=integ(res) 
       mea_appen=np.append(mea_appen,np.array([out_mean,long[i],lat[i]]).reshape(3,1),axis=1)
@@ -257,7 +259,7 @@ def mean(res):
     return mea
 
 def integ(res):
-    intg=trapz(res,freq[34:42])
+    intg=trapz(res,freq[29:34])
     return intg
     
 
@@ -294,7 +296,7 @@ def convert_pictures_to_video(pathIn, pathOut, fps, time):
     out.release()
 
 # Example:
-directory="//Users/sebinjohn/AON_PROJECT/Data/Video Making"
+directory="//Users/sebinjohn/AON_PROJECT/Data/Video Making/primary_video"
 pathIn=directory+'/*.jpg'
 pathOut=directory+"/"+str(st)+"-"+str(et)+".avi"
 fps=8

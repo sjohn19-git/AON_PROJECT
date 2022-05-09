@@ -47,7 +47,17 @@ long=["-161.2638","-133.121","-136.232","-154.4524",
       "-139.6369","-153.1318","-143.2841","-146.3399",
       "-169.5484","-159.589493","-166.2011","-143.092606",
       "-175.103104","-177.1296","178.5112","-178.039",
-      "-169.8951","-162.600006","-155.7251","-156.6132"
+      "-169.8951","-162.600006","-155.7251","-156.6132",
+      "-139.5349","-137.8969","-136.7191","-139.8717",
+      "-135.7863","-133.742","-138.0223","-136.2216",
+      "-134.2708","-138.3689","-134.3426","-139.9355",
+      "-138.3063","-136.3767","-138.2164","-136.3304",
+      "-137.5201","-138.129","178.567","-138.4624",
+      "-136.7935","-134.3906","-137.0885","-135.7796",
+      "-138.7367","-140.1906","-138.5755","-136.0906",
+      "-137.7381","-136.9598","-133.7147","-132.8174",
+      "-132.2691","-130.9673","-131.1312","-130.2496",
+      "-130.0257","-133.0818"
       ]
 lat=["59.2533","56.1146","57.9616","57.5665",
      "55.3279","59.9979","59.1953","61.0224",
@@ -77,7 +87,17 @@ lat=["59.2533","56.1146","57.9616","57.5665",
      "59.9534","61.8823","60.1205","59.4296",
      "56.6011","55.831001","60.3849","60.7523",
      "52.730801","51.9303","51.9484","51.8339",
-     "52.8235","66.895103","67.0486","68.7132"
+     "52.8235","66.895103","67.0486","68.7132",
+     "68.6043","68.3889","66.3701","67.6136",
+     "67.6106","67.441","66.9116","66.9808",
+     "66.9227","66.2191","65.8052","65.4483",
+     "65.3609","65.2225","64.4525","64.5753",
+     "63.8433","63.109","51.932","62.4435",
+     "62.5763","62.2024","61.4593","61.4817",
+     "69.3286","60.7718","60.3024","60.7704",
+     "59.6304","60.1218","59.5898","60.2114",
+     "58.9601","59.3946","57.9128","56.9811",
+     "55.9154","61.1512"
      ]
 stationo=["final_O14K.npy","final_U33K.npy","final_S31K.npy","final_R18K.npy",
           "final_V35K.npy","final_P23K.npy","final_P17K.npy","final_M16K.npy",
@@ -107,8 +127,17 @@ stationo=["final_O14K.npy","final_U33K.npy","final_S31K.npy","final_R18K.npy",
           "final_BCP.npy","final_M20K.npy","final_BGLC.npy","final_Q23K.npy",
           "final_P08K.npy","final_CHN.npy","final_M11K.npy","final_CRQ.npy",
           "final_SMY.npy","final_KINC.npy","final_LSSA.npy","final_TASE.npy",
-          "final_CLES.npy","final_KOTZ.npy","final_F20K.npy","final_D20K.npy"
-          
+          "final_CLES.npy","final_KOTZ.npy","final_F20K.npy","final_D20K.npy",
+          "final_E28M.npy","final_E29M.npy","final_EPYK.npy","final_F28M.npy",
+          "final_F30M.npy","final_F31M.npy","final_G29M.npy","final_G30M.npy",
+          "final_G31M.npy","final_H29M.npy","final_H31M.npy","final_I28M.npy",
+          "final_I29M.npy","final_I30M.npy","final_J29N.npy","final_J30M.npy",
+          "final_K29M.npy","final_L29M.npy","final_LSSE.npy","final_M29M.npy",
+          "final_M30M.npy","final_M31M.npy","final_N30M.npy","final_N31M.npy",
+          "final_D28M.npy","final_O28M.npy","final_O29M.npy","final_O30N.npy",
+          "final_P29M.npy","final_P30M.npy","final_P32M.npy","final_P33M.npy",
+          "final_Q32M.npy","final_R33M.npy","final_S34M.npy","final_T35M.npy",
+          "final_U35K.npy","final_N32M.npy"
           ]
 env=["notebook_env_O14K.db","notebook_env_U33K.db","notebook_env_S31K.db","notebook_env_R18K.db",
      "notebook_env_V35K.db","notebook_env_P23K.db","notebook_env_P17K.db","notebook_env_M16K.db",
@@ -138,8 +167,19 @@ env=["notebook_env_O14K.db","notebook_env_U33K.db","notebook_env_S31K.db","noteb
      "notebook_env_BCP.db","notebook_env_M20K.db","notebook_env_BGLC.db","notebook_env_Q23K.db",
      "notebook_env_P08K.db","notebook_env_CHN.db","notebook_env_M11K.db","notebook_env_CRQ.db",
      "notebook_env_SMY.db","notebook_env_KINC.db","notebook_env_LSSA.db","notebook_env_TASE.db",
-     "notebook_env_CLES.db","notebook_env_KOTZ.db","notebook_env_F20K.db","notebook_env_D20K.db"
+     "notebook_env_CLES.db","notebook_env_KOTZ.db","notebook_env_F20K.db","notebook_env_D20K.db",
+     "notebook_env_E28M.db","notebook_env_E29M.db","notebook_env_EPYK.db","notebook_env_F28M.db",
+     "notebook_env_F30M.db","notebook_env_F31M.npy","notebook_env_G29M.npy","notebook_env_G30M.npy",
+     "notebook_env_G31M.npy", "notebook_env_H29M.npy","notebook_env_H31M.npy","notebook_env_I28M.npy",
+     "notebook_env_I29M.npy","notebook_env_I30M.npy","notebook_env_J29N.npy","notebook_env_J30M.npy",
+     "notebook_env_K29M.npy", "notebook_env_L29M.npy","notebook_env_LSSE.npy","notebook_env_M29M.npy",
+     "notebook_env_M30M.npy","notebook_env_M31M.npy","notebook_env_N30M.npy","notebook_env_N31M.npy",
+     "notebook_env_D28M.npy", "notebook_env_O28M.npy","notebook_env_O29M.npy","notebook_env_O30N.npy",
+     "notebook_env_P29M.npy","notebook_env_P30M.npy","notebook_env_P32M.npy","notebook_env_P33M.npy",
+     "notebook_env_Q32M.npy","notebook_env_R33M.npy","notebook_env_S34M.npy","notebook_env_T35M.npy",
+     "notebook_env_U35K.npy","notebook_env_N32M.npy"
      ]
+
 
 
 os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")

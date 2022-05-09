@@ -35,13 +35,11 @@ for i in range (95):
 freq.append(19.740300000000000)
 len(freq)
 
-
-pygmt.makecpt(cmap="hot",output="exp.cpt", series=[-150,-90,0.005],reverse=True)
-pygmt.makecpt(cmap="bathy",output="expll1.cpt", series=[0,14],reverse=True)
-grid = pygmt.datasets.load_earth_relief(resolution="10m", region=[-172, -135, 52, 73])
+angle=np.array([])
+wave_angle=np.array([])
 datapath="/Users/sebinjohn/AON_PROJECT/Data/*/"
-st=UTCDateTime(2019,4,1,1)
-et=UTCDateTime(2019,4,1,2)
+st=UTCDateTime(2019,11,1)
+et=UTCDateTime(2019,12,1)
 windw=1
 tim_len=int((et-st)/(3600*windw))
 smth_intg=np.zeros((len(stationo),tim_len))
@@ -66,7 +64,7 @@ def map_plo(st,et):
         np.count_nonzero(np.isnan(median_timeseries))
     for j in range(1,np.shape(mean_timeseries)[1]):
         median_timeseries[0,j,1:]=medfilt(median_timeseries[0,j,1:],7)
-        print("interpolating station "+stationo[j-1][6:])
+        #print("interpolating station "+stationo[j-1][6:])
         interp_inde=np.array([])
         interp_x=median_timeseries[0,j,1:]
         datagap=np.where(interp_x==0)[0]
@@ -87,11 +85,9 @@ def map_plo(st,et):
     for i in range(len(time_frame)):
         tim=time_frame[i]
         print("searching for wave height for"+str(tim))
-        grid,data_wave=wave(tim)
+        grid,gridf,data_wave=wave(tim)
         print("plotting "+str(tim))
-        ma_pic_generator(tim,grid,median_timeseries,i)
-        plane_fitting(tim,grid,median_timeseries,i)
-        fig_merge(tim)
+        angle,wave_angle=plane_fitting(tim,gridf,grid,median_timeseries,i,angle,wave_angle)
     return mean_timeseries,median_timeseries
 
         
@@ -123,32 +119,16 @@ def wave(tim):
     latg, long = grb.latlons()
     lat=(latg[:,0])
     lon=(long[0,:])
-    grid = xr.DataArray(
+    gridf=xr.DataArray(
         data_wave, dims=["lat", "lon"], coords={"lat": lat, "lon": lon}
         )
-    return grid,data_wave
+    grid = xr.DataArray(data_wave[34:125,300:521], dims=["lat", "lon"], coords={"lat": lat[34:125], "lon": lon[300:521]})
+    return grid,gridf,data_wave
     
-    
+   
 
-def ma_pic_generator(tim,grid,median_timeseries,z):
-    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")
-    fig=pygmt.Figure()
-    with fig.subplot(nrows=1, ncols=2, figsize=("45c", "60c"), frame="lrtb",clearance='2c',title=""):
-        with fig.set_panel(panel=0): 
-            #fig.basemap(region=[150,260, 30, 73],frame=True, projection="L-159/35/33/45/22c")
-            fig.grdimage(grid=grid,region=[150,260, 30, 73],projection="L-159/35/33/45/22c", cmap="expll1.cpt",frame="a",nan_transparent=True)
-            fig.coast(region=[150,260, 30, 73], projection="L-159/35/33/45/22c",shorelines=True,frame="a")
-            fig.colorbar(cmap="exp.cpt",frame='af+l"PSD (db)"',projection="L-159/35/33/45/22c")  
-            fig.plot(x=median_timeseries[1,1:,z+1],y=median_timeseries[2,1:,z+1],color=median_timeseries[0,1:,z+1],style="c0.30c",cmap="exp.cpt",pen="black", projection="L-159/35/33/45/22c")
-            fig.text(text=str(tim),x=-160,y=72,projection="L-159/35/33/45/22c")
-        with fig.set_panel(panel=1): 
-            fig.coast(region="g", projection="Cyl_stere/180/-40/20c",shorelines=True)
-            fig.grdimage(grid=grid,projection="Cyl_stere/180/-40/20c",frame="a", cmap="expll1.cpt",nan_transparent=True)
-            fig.colorbar(projection="Cyl_stere/180/-40/20c", cmap="expll1.cpt",frame='af+l"Significant Wave Height (m)"')
-            fig.text(text=str(tim),x=190,y=85,projection="Cyl_stere/180/-40/20c")
-        fig.savefig(str(tim)+"wave.jpg")
-
-def plane_fitting(tim,grid,median_timeseries,z):
+def plane_fitting(tim,gridf,grid,median_timeseries,z,angle,wave_angle):
+    try:
         xs=median_timeseries[1,1:,z+1].copy()
         ys=median_timeseries[2,1:,z+1].copy()
         zs=median_timeseries[0,1:,z+1].copy()
@@ -170,35 +150,22 @@ def plane_fitting(tim,grid,median_timeseries,z):
         errors = b - A * fit
         residual = np.linalg.norm(errors)
         print("solution: %f x + %f y + %f = z" % (fit[0], fit[1], fit[2]))
-        print("errors: \n", errors)
+       # print("errors: \n", errors)
         print("residual:", residual)
         vector_1 = [fit[0,0],fit[1,0]]
         vector_2 = [-1, 0]
         unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
         unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
         dot_product = np.dot(unit_vector_1, unit_vector_2)
-        angle = np.arccos(dot_product)*(180/3.14159)
-        print("angle is =",angle)
-        plt.figure(figsize=(12,12))
-        ax = plt.subplot(111, projection='3d')
-        ax.scatter(xs, ys, zs, color='b')
-        # plot plane
-        xlim = ax.get_xlim()
-        ylim = ax.get_ylim()
-        X,Y = np.meshgrid(np.arange(xlim[0], xlim[1]),
-                          np.arange(ylim[0], ylim[1]))
-        Z = np.zeros(X.shape)
-        for r in range(X.shape[0]):
-            for c in range(X.shape[1]):
-                Z[r,c] = fit[0] * X[r,c] + fit[1] * Y[r,c] + fit[2]
-        ax.plot_wireframe(X,Y,Z, color='k')
-        ax.set_xlabel('lat')
-        ax.set_ylabel('lon')
-        ax.set_zlabel('power')
-        ax.set_zlim(-170,-80)
-        ax.set_title(str(tim))
-        plt.savefig(str(tim)+"plane.jpg",dpi=700)
-        plt.close()
+        angl = np.arccos(dot_product)*(180/3.14159)
+        angle=np.append(angle,angl)
+        print("angle is =",angl)
+        lonw=grid.where(grid==grid.max(), drop=True).lon.data
+        latw=grid.where(grid==grid.max(), drop=True).lat.data
+        m=(65.821-latw)/((360-149.5432)-lonw)
+        wave_angl=180-(np.arctan(-m)*(180/3.14159))
+        wave_angle=np.append(wave_angle,wave_angl)
+        print("wave angle is =",wave_angl)
         fig2 = pygmt.Figure()
         fig2.grdimage(grid=grid,region=[150,260, 30, 73],projection="L-159/35/33/45/15c", cmap="expll1.cpt",frame="a",nan_transparent=True)
         fig2.coast(region=[150,260, 30, 73], projection="L-159/35/33/45/15c",shorelines=True)
@@ -209,29 +176,30 @@ def plane_fitting(tim,grid,median_timeseries,z):
             y=[65.8251],
             frame="a",
             style="v0.6c+e",
-            direction=[[angle], [-1.5*np.linalg.norm(vector_1)]],
+            direction=[[angl], [-1.5*np.linalg.norm(vector_1)]],
             pen="2p",
             color="red3",
         )
-        fig2.savefig(str(tim)+"direction.jpg")
-
-
-def fig_merge(tim):
-    os.chdir("/Users/sebinjohn/AON_PROJECT/Data/Video Making")
-    image1 = Image.open(str(tim)+"wave.jpg")
-    image2 = Image.open(str(tim)+"plane.jpg")
-    image3 = Image.open(str(tim)+"direction.jpg")
-    image1 = image1.resize((1280,500))
-    image2 = image2.resize((640, 450))
-    image3 = image3.resize((640, 360))
-    image1_size = image1.size
-    new_image = Image.new('RGB',(image1_size[0], 2*image1_size[1]), (250,250,250))
-    new_image.paste(image1,(0,0))
-    new_image.paste(image2,(0,10+image1_size[1]))
-    new_image.paste(image3,(int(image1_size[0]/2),10+image1_size[1]))
-    new_image.save(str(tim)+".jpg","JPEG")
-
-
+        dire2=(grid.where(grid==grid.max(), drop=True).data[0][0])/10
+        if m<0:
+            dire2=-1*dire2
+        fig2.plot(
+            region=[150,260, 30, 73],
+            projection="L-159/35/33/45/15c",
+            x=[-149.5432],
+            y=[65.8251],
+            frame="a",
+            style="v0.6c+e",
+            direction=[[wave_angl][0], [dire2]],
+            pen="2p",
+            color="blue3",
+        )
+        fig2.text(text=str(tim),x=-160,y=72,projection="L-159/35/33/45/22c")
+        fig2.savefig("/Users/sebinjohn/AON_PROJECT/Data/Angle_comp/"+str(tim)+"angle_comp.jpg")
+    except:
+        print("passed "+str(tim))
+        pass
+    return angle,wave_angle
 
 def mean_integ(tim,mea_appen,integ_appen):
   for i in range(len(long)):
@@ -264,16 +232,10 @@ def integ(res):
 
 
 
+
 def convert_pictures_to_video(pathIn, pathOut, fps, time):
     ''' this function converts images to video'''
-    pics=glob.glob(join(directory+"/*wave.jpg"))
-    len(pics)
-    for ele in glob.glob(join(directory+"/*plane.jpg")):
-        pics.append(ele)
-    for ele in glob.glob(join(directory+"/*direction.jpg")):
-        pics.append(ele)
-    for ele in pics:
-        os.remove(ele)
+    pics=glob.glob(join(directory+"/*.jpg"))
     frame_array=[]
     files=[f for f in glob.glob(pathIn) if isfile(join(pathIn,f))]
     files.sort()
@@ -294,79 +256,20 @@ def convert_pictures_to_video(pathIn, pathOut, fps, time):
     out.release()
 
 # Example:
-directory="//Users/sebinjohn/AON_PROJECT/Data/Video Making"
+directory="//Users/sebinjohn/AON_PROJECT/Data/Angle_comp"
 pathIn=directory+'/*.jpg'
 pathOut=directory+"/"+str(st)+"-"+str(et)+".avi"
 fps=8
-time=1 # the duration of each picture in the video
-
+time=1 
 
 
 
 mean_timeseries,median_timeseries=map_plo(st,et)
 
 
-
-convert_pictures_to_video(pathIn, pathOut, fps, time)
-
-
-
-len(env)
+fig2 = pygmt.Figure()
+fig2.coast(region="g", projection="Cyl_stere/180/-40/20c",shorelines=True)
+fig2.grdimage(grid=grid,projection="Cyl_stere/180/-40/20c",frame="a", cmap="expll1.cpt",nan_transparent=True)
+fig2.savefig("/Users/sebinjohn/AON_PROJECT/Data/Angle_comp/"+str(tim)+"angle_comdefjp.jpg")
 
 
-#--------------------------------------------------------------------------------
-pics=glob.glob(join(directory+"/*wave.jpg"))
-len(pics)
-for ele in glob.glob(join(directory+"/*plane.jpg")):
-    pics.append(ele)
-for ele in pics:
-    os.remove(ele)
-#--------------------------------------------------------------------------------
-fig = pygmt.Figure()
-fig.coast(region=[150,260, 30, 73], projection="L-159/35/33/45/22c",shorelines=True)
-fig.plot(
-    region=[150,260, 30, 73],
-    projection="L-159/35/33/45/22c",
-    frame="ag",
-    x=[-149.5432],
-    y=[65.8251],
-    style="v0.6c+e",
-    direction=[[56], [-0.875]],
-    pen="2p",
-    color="red3",
-)
-fig.show(method="external")
-
-
-
-
-vector_1 = [ -0.299093, -0.451724]
-vector_2 = [-1, 0]
-
-unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
-unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
-dot_product = np.dot(unit_vector_1, unit_vector_2)
-angle = np.arccos(dot_product)
-
-print(angle*180/3.14)
-
-
-
-
-
-import cdsapi
-
-c = cdsapi.Client()
-
-c.retrieve(
-    'reanalysis-era5-single-levels',
-    {
-        'product_type': 'reanalysis',
-        'format': 'grib',
-        'variable': 'significant_height_of_combined_wind_waves_and_swell',
-        'year': '2019',
-        'day': '01',
-        'time': '01:00',
-        'month': '01',
-    },
-    'download.grib')

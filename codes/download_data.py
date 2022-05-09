@@ -53,7 +53,7 @@ def pickle_maker():
     for i in range(76):
         net.append("TA")
     for i in range(100):
-        net.append("AV")
+        net.append("AK")
     return sta, starttimeta, endtimeta,starttimeak,endtimeak,cha,loc,net,starttimes,endtimes
 
 
@@ -88,6 +88,7 @@ def download(net,starttimes,endtimes,sta):
 
 
 sta, starttimeta, endtimeta,starttimeak,endtimeak,cha,loc,net,starttimes,endtimes=pickle_maker()
+
 os.chdir(join("/home/sjohn/spectrogram/"+sta))
 
 with open((str(sta)+".pkl"),"wb") as f:
