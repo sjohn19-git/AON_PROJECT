@@ -23,7 +23,7 @@ with open("metadta.pkl","rb") as f:
 
 
 
-sta="O14K"
+sta="K13K"
 os.chdir(r"/Users/sebinjohn/AON_PROJECT/Data/"+sta)
 with open((str(sta)+".pkl"),"rb") as f:
     sta, starttimeta, endtimeta,starttimeak,endtimeak,sta,cha,loc=pickle.load(f)
@@ -35,7 +35,7 @@ for i in range(len(fint_frames)):
 with open("final_"+sta+".npy", 'rb') as g:
     final=np.load(g)
 
-xmin=18262
+xmin=17532.0
 xmax=18628
 xlmi=xmin
 xlma=xmax
@@ -70,7 +70,7 @@ ax1.xaxis.set_major_locator(mdates.MonthLocator(1))
 #ax1.xaxis.set_major_locator(mdates.HourLocator(interval=4))
 ax1.xaxis.set_major_formatter(date_format)
 ax1.xaxis.set_minor_formatter(date_format1)
-#ax1.set_ylim(freq[29],0.1)
+ax1.set_ylim(freq[29],0.1)
 #ax1.set_ylabel("Frequency(Hz)")
 ax1.set_xlim([xmin,xmax])
 # for label in ax1.get_xticklabels():

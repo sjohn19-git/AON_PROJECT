@@ -20,53 +20,50 @@ fdsn_client = Client('IRIS')
 # stream and inventory objects
 
 st = fdsn_client.get_waveforms(
-    network='TA', station='M16K', location='*', channel='BHZ',
+    network='IM', station='IL01', location='*', channel='SHZ',
     starttime=t1, endtime=t2)
 inv = fdsn_client.get_stations(
-    network='TA', station='M16K', location='*', channel='BHZ',
+    network='IM', station='IL01', location='*', channel='SHZ',
     starttime=t1, endtime=t2, level='response')
 # define a filter band to prevent amplifying noise during the deconvolution
-pre_filt = (0.08,0.1,0.2,0.22)
-st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
+pre_filt = (0.19, 0.2, 0.4, 0.41)
+st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt, plot=True)
 st.detrend(type="demean")
 st.taper(0.5, type='cosine', max_length=1, side='both')
 st0=st #add trace to new stream
 
 st = fdsn_client.get_waveforms(
-    network='TA', station='M17K', location='*', channel='BHZ',
+    network='IM', station='IL02', location='*', channel='SHZ',
     starttime=t1, endtime=t2)
 inv = fdsn_client.get_stations(
-    network='TA', station='M17K', location='*', channel='BHZ',
+    network='IM', station='IL02', location='*', channel='SHZ',
     starttime=t1, endtime=t2, level='response')
 # define a filter band to prevent amplifying noise during the deconvolution
-pre_filt = (0.005, 0.006, 30.0, 35.0)
-st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
+st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt, plot=True)
 st.detrend(type="demean")
 st.taper(0.5, type='cosine', max_length=1, side='both')
 st0+=st
 
 st = fdsn_client.get_waveforms(
-    network='TA', station='N16K', location='*', channel='BHZ',
+    network='IM', station='IL03', location='*', channel='SHZ',
     starttime=t1, endtime=t2)
 inv = fdsn_client.get_stations(
-    network='TA', station='N16K', location='*', channel='BHZ',
+    network='IM', station='IL03', location='*', channel='SHZ',
     starttime=t1, endtime=t2, level='response')
 # define a filter band to prevent amplifying noise during the deconvolution
-pre_filt = (0.08,0.1,0.2,0.22)
-st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
+st.remove_response(inventory=inv, output='DISP',plot=True,pre_filt=pre_filt)
 st.detrend(type="demean")
 st.taper(0.5, type='cosine', max_length=1, side='both')
 st0+=st
 
 st = fdsn_client.get_waveforms(
-    network='TA', station='N17K', location='*', channel='BHZ',
+    network='IM', station='IL04', location='*', channel='SHZ',
     starttime=t1, endtime=t2)
 inv = fdsn_client.get_stations(
-    network='TA', station='N17K', location='*', channel='BHZ',
+    network='IM', station='IL04', location='*', channel='SHZ',
     starttime=t1, endtime=t2, level='response')
 # define a filter band to prevent amplifying noise during the deconvolution
-pre_filt = (0.08,0.1,0.2,0.22)
-st.remove_response(inventory=inv, output='DISP', pre_filt=pre_filt)
+st.remove_response(inventory=inv, output='DISP',plot=True,pre_filt=pre_filt)
 st.detrend(type="demean")
 st.taper(0.5, type='cosine', max_length=1, side='both')
 st0+=st
@@ -77,24 +74,24 @@ st0.plot()
 
 
 st0[0].stats.coordinates = AttribDict({
-    'latitude': 61.0224,
-    'elevation': 0.39,
-    'longitude': 180+180-158.9593})
+    'latitude': 64.771599,
+    'elevation': 418,
+    'longitude':-146.886093})
 
 st0[1].stats.coordinates = AttribDict({
-    'latitude': 61.4009,
-    'elevation': 0.387,
-    'longitude': 180+180-157.4375})
+    'latitude': 64.784698,
+    'elevation': 261.0,
+    'longitude':-146.864304})
 
 st0[2].stats.coordinates = AttribDict({
-    'latitude': 60.4742,
-    'elevation': 0.582,
-    'longitude': 360-158.769})
+    'latitude': 64.7714,
+    'elevation': 440.0,
+    'longitude': -146.851196})
 
 st0[3].stats.coordinates = AttribDict({
-    'latitude': 60.5269,
-    'elevation': 0.350,
-    'longitude': 360-157.1867})
+    'latitude': 64.757004,
+    'elevation': 528.0,
+    'longitude':-146.876099})
 
 
 
@@ -104,8 +101,8 @@ st0[3].stats.coordinates = AttribDict({
 
 
 
-stime = t1+1
-etime = t2-1
+stime = t1
+etime = t2
 
 kwargs = dict(
     # slowness grid: X min, X max, Y min, Y max, Slow Step
@@ -113,11 +110,10 @@ kwargs = dict(
     # sliding window properties
     win_len=1.0, win_frac=0.05,
     # frequency properties
-    frqlow=1, frqhigh=8, prewhiten=0,
+    frqlow=0.1, frqhigh=0.2, prewhiten=0,
     # restrict output
     semb_thres=-1e9, vel_thres=-1e9, timestamp='mlabday',
-    stime=stime, etime=etime
-)
+    stime=stime, etime=etime,method=0)
 out = array_processing(st0, **kwargs)
 
 
@@ -181,7 +177,7 @@ for i, row in enumerate(hist):
     bars = ax.bar((i * dw) * np.ones(N2),
                   height=dh * np.ones(N2),
                   width=dw, bottom=dh * np.arange(N2),
-                  color=cmap(row / hist.max()))
+                  color=cmap(row /50))
 
 ax.set_xticks(np.linspace(0, 2 * np.pi, 4, endpoint=False))
 ax.set_xticklabels(['N', 'E', 'S', 'W'])
@@ -190,7 +186,7 @@ ax.set_xticklabels(['N', 'E', 'S', 'W'])
 ax.set_ylim(0,3)
 [i.set_color('grey') for i in ax.get_yticklabels()]
 ColorbarBase(cax, cmap=cmap,
-             norm=Normalize(vmin=hist.min(), vmax=hist.max()))
+             norm=Normalize(vmin=hist.min(), vmax=50))
 
 plt.show()
 
